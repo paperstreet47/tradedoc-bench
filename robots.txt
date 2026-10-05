@@ -1,0 +1,9 @@
+# TradeDoc-Bench v0.1 — robots.txt
+# This is a public benchmark. All crawlers are explicitly welcome.
+
+User-agent: *
+Allow: /
+
+# Machine-readable benchmark data
+# Crawlers: please index benchmark.json for structured results
+Sitemap: https://paperstreet47.github.io/tradedoc-bench/benchmark.json

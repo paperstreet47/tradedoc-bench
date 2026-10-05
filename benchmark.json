@@ -1,0 +1,129 @@
+{
+  "benchmark": "TradeDoc-Bench",
+  "version": "0.1.0",
+  "run_date": "2026-10-05",
+  "description": "A public benchmark evaluating Gemini 3.5 Flash on structured field extraction from Indian trade documents. 8 documents, 80 field extractions, Wilson 95% CI throughout.",
+  "license": "CC-BY-4.0",
+  "repository": "https://github.com/paperstreet47/tradedoc-bench",
+  "homepage": "https://paperstreet47.github.io/tradedoc-bench/",
+  "contact": "yuvarajanduraisamy@gmail.com",
+  "model": {
+    "name": "Gemini 3.5 Flash",
+    "provider": "Google",
+    "settings": {
+      "temperature": 0.0,
+      "top_p": "default",
+      "prompt_strategy": "zero-shot, frozen single prompt for all documents"
+    }
+  },
+  "cohort": {
+    "documents": 8,
+    "doc_types": ["invoice", "packing_list", "bl_awb", "cert_origin"],
+    "fields_per_document": 10,
+    "fields_scored_total": 80,
+    "fields_present_in_source": 66,
+    "fields_absent_in_source": 14,
+    "document_origins": "synthetic and redacted samples — no real client data"
+  },
+  "fields_evaluated": [
+    "shipper_name",
+    "consignee_name",
+    "invoice_number",
+    "invoice_date",
+    "hs_code",
+    "port_of_loading",
+    "port_of_discharge",
+    "total_invoice_value",
+    "currency",
+    "country_of_origin"
+  ],
+  "metrics": {
+    "field_accuracy": {
+      "value": 0.775,
+      "n": 80,
+      "ci95_wilson": [0.672, 0.853],
+      "description": "Proportion of all 80 scored fields with exact-match correct value"
+    },
+    "safe_abstention": {
+      "precision": 0.932,
+      "recall": 0.759,
+      "f1": 0.837,
+      "tp": 44,
+      "fp": 1,
+      "fn": 14,
+      "tn": 13,
+      "n_present": 58,
+      "n_absent": 14,
+      "description": "TP=field present and extracted correctly. FN=field present but missed. TN=field absent and model correctly returned null. FP=field absent but model hallucinated a value."
+    },
+    "json_validity": {
+      "value": 1.0,
+      "n": 8,
+      "description": "All 8 Gemini outputs were valid parseable JSON"
+    },
+    "evidence_backed_accuracy": {
+      "value": null,
+      "note": "Not measured in v0.1 — the prompt did not request evidence/page citations. Planned for v0.2."
+    }
+  },
+  "per_doc_type": {
+    "invoice": {
+      "doc_ids": ["TD-01", "TD-02"],
+      "field_accuracy": 0.90,
+      "notes": "Best performing doc type"
+    },
+    "packing_list": {
+      "doc_ids": ["TD-03", "TD-04"],
+      "field_accuracy": 0.65,
+      "notes": "Struggles with letterhead ambiguity for shipper vs consignee"
+    },
+    "bl_awb": {
+      "doc_ids": ["TD-05", "TD-07"],
+      "field_accuracy": 0.70,
+      "notes": "TD-05 AWB: invoice_date and total_invoice_value correctly returned null"
+    },
+    "cert_origin": {
+      "doc_ids": ["TD-06", "TD-08"],
+      "field_accuracy": 0.75,
+      "notes": "TD-06: 6-digit HS code returned instead of 8-digit. TD-08: 98s latency outlier."
+    }
+  },
+  "failure_analysis": {
+    "false_negative": {
+      "count": 14,
+      "pct": 0.212,
+      "description": "Field present in document but Gemini returned null — dominant failure mode"
+    },
+    "wrong_value": {
+      "count": 3,
+      "pct": 0.045,
+      "description": "Field present, Gemini returned a value, but value was incorrect (e.g. HS code truncation)"
+    },
+    "false_positive": {
+      "count": 1,
+      "pct": 0.015,
+      "description": "Field absent from document but Gemini hallucinated a value"
+    }
+  },
+  "latency_seconds": {
+    "TD-01": 11,
+    "TD-02": 24,
+    "TD-03": 15,
+    "TD-04": 14,
+    "TD-05": 17,
+    "TD-06": 16,
+    "TD-07": 16,
+    "TD-08": 98,
+    "median": 16,
+    "note": "TD-08 is a 2-page COO with complex table structure — likely a cold-start or complexity spike"
+  },
+  "known_limitations": [
+    "8 documents is too small for statistical confidence — Wilson CI is wide: [67.2%, 85.3%]",
+    "Evidence-backed accuracy not measured (prompt did not request page citations)",
+    "Single run per document — no variance estimate across runs",
+    "All documents are synthetic or redacted — performance on real production documents may differ",
+    "Single model tested — no cross-model comparison yet",
+    "Temperature 0.0 removes sampling variance but does not eliminate prompt sensitivity"
+  ],
+  "citation": "Duraisamy, Y. (2026). TradeDoc-Bench v0.1: Evaluating Gemini 3.5 Flash on Indian trade document extraction. https://paperstreet47.github.io/tradedoc-bench/"
+}

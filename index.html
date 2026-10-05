@@ -1,0 +1,673 @@
+<title>TradeDoc-Bench v0.1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+
+<!-- JSON-LD: Structured data so AI agents and search engines understand this page as a Dataset -->
+<!-- Why: OpenBenchmarks and LLM crawlers parse this to understand the benchmark without reading prose -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "TradeDoc-Bench v0.1",
+  "description": "A public benchmark evaluating Gemini 3.5 Flash on structured field extraction from Indian trade documents — invoices, packing lists, air waybills, and certificates of origin. 8 documents, 80 field extractions, Wilson 95% CI throughout.",
+  "version": "0.1.0",
+  "datePublished": "2026-10-05",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "url": "https://paperstreet47.github.io/tradedoc-bench/",
+  "sameAs": "https://paperstreet47.github.io/tradedoc-bench/benchmark.json",
+  "creator": {
+    "@type": "Person",
+    "name": "Yuvarajan Duraisamy",
+    "email": "yuvarajanduraisamy@gmail.com"
+  },
+  "measurementTechnique": "Frozen zero-shot prompt, Temperature 0.0, single run per document. Scoring: exact-match for values, Wilson 95% CI for all proportions. Safe-abstention classification (TP/TN/FP/FN) for absent fields.",
+  "variableMeasured": [
+    {
+      "@type": "PropertyValue",
+      "name": "field_accuracy",
+      "description": "Proportion of extracted fields that exactly match ground truth",
+      "value": "0.775",
+      "unitText": "proportion"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "safe_abstention_precision",
+      "description": "Of fields Gemini extracted from absent fields, how many were correct (TP / (TP+FP))",
+      "value": "0.932",
+      "unitText": "proportion"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "safe_abstention_recall",
+      "description": "Of fields present in documents, how many did Gemini successfully extract (TP / (TP+FN))",
+      "value": "0.759",
+      "unitText": "proportion"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "safe_abstention_f1",
+      "description": "Harmonic mean of precision and recall",
+      "value": "0.837",
+      "unitText": "proportion"
+    },
+    {
+      "@type": "PropertyValue",
+      "name": "json_validity",
+      "description": "Proportion of model outputs that were valid, parseable JSON",
+      "value": "1.00",
+      "unitText": "proportion"
+    }
+  ],
+  "keywords": ["LLM benchmark", "document extraction", "trade documents", "Indian customs", "Gemini", "structured extraction", "invoice parsing", "NLP evaluation"]
+}
+</script>
+
+<style>
+/*
+  Layout: narrow single column, data tables flush to edge on mobile
+  Palette: dark-ink on warm-white; amber accent from the doc world (stamps, seals)
+  Type: IBM Plex Sans (body) + IBM Plex Mono (data/code)
+  Single theme: deliberate — benchmark data reads better on light
+*/
+
+:root {
+  --bg:        #F9F7F4;
+  --bg-card:   #FFFFFF;
+  --fg:        #1A1714;
+  --fg-muted:  #5C544E;
+  --fg-faint:  #9B9089;
+  --accent:    #B35E00;
+  --accent-lt: #FFF0E0;
+  --good:      #1A7A3C;
+  --good-lt:   #E6F5EC;
+  --warn:      #8B5E00;
+  --warn-lt:   #FFF8E1;
+  --bad:       #C0392B;
+  --bad-lt:    #FDECEA;
+  --border:    #E2DDD8;
+  --mono:      'IBM Plex Mono', 'Courier New', monospace;
+  --sans:      'IBM Plex Sans', system-ui, sans-serif;
+  color-scheme: light;
+}
+
+/* ---- Reset & Base ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 16px;
+  line-height: 1.65;
+  padding-inline: 20px;
+  padding-block: 0;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+/* ---- Typography ---- */
+h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; text-wrap: balance }
+h2 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-muted); margin-block: 2.5rem 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border) }
+h3 { font-size: 1rem; font-weight: 600; margin-block: 1rem 0.35rem }
+p  { margin-block: 0.6rem; max-width: 68ch }
+a  { color: var(--accent); text-decoration: underline; text-underline-offset: 2px }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--border); padding: 0.1em 0.35em; border-radius: 3px }
+
+/* ---- Layout helpers ---- */
+.section { margin-block: 3rem }
+.stack   { display: flex; flex-direction: column; gap: 1rem }
+.row     { display: flex; gap: 1rem; flex-wrap: wrap }
+.row > * { flex: 1 1 200px; min-width: 0 }
+
+/* ---- Header ---- */
+header {
+  padding-block: 2.5rem 2rem;
+  border-bottom: 2px solid var(--fg);
+}
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+.subtitle {
+  color: var(--fg-muted);
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--fg-faint);
+}
+.meta-row span { display: flex; align-items: center; gap: 0.35rem }
+
+/* ---- KPI tiles ---- */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-block: 1.5rem;
+}
+.kpi {
+  background: var(--bg-card);
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.kpi-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.kpi-value {
+  font-size: 1.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+  line-height: 1;
+}
+.kpi-sub {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--fg-faint);
+}
+
+/* ---- Insight box ---- */
+.insight {
+  background: var(--accent-lt);
+  border-left: 3px solid var(--accent);
+  padding: 1rem 1.25rem;
+  border-radius: 0 4px 4px 0;
+  margin-block: 1rem;
+}
+.insight strong { color: var(--accent) }
+
+/* ---- Tables ---- */
+.tbl-wrap { overflow-x: auto; margin-block: 0.75rem }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 460px;
+}
+th {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--fg);
+  white-space: nowrap;
+}
+td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tr:last-child td { border-bottom: none }
+tr:hover td { background: var(--bg) }
+
+/* Accuracy pill */
+.pct {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.15em 0.55em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.pct-hi  { background: var(--good-lt); color: var(--good) }
+.pct-mid { background: var(--warn-lt); color: var(--warn) }
+.pct-lo  { background: var(--bad-lt);  color: var(--bad)  }
+
+/* CI range */
+.ci { font-family: var(--mono); font-size: 0.75rem; color: var(--fg-faint) }
+
+/* ---- Prompt block ---- */
+.prompt-box {
+  background: #1A1714;
+  color: #F0EDE9;
+  border-radius: 6px;
+  padding: 1.25rem 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-block: 1rem;
+}
+.prompt-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* ---- Failure breakdown ---- */
+.fail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-block: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.fail-row:last-child { border-bottom: none }
+.fail-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; min-width: 60px }
+.fail-bar { height: 100%; border-radius: 3px; background: var(--accent) }
+.fail-name { min-width: 130px; font-weight: 500 }
+.fail-pct  { font-family: var(--mono); font-size: 0.8rem; color: var(--fg-muted); min-width: 40px; text-align: right }
+
+/* ---- Footer ---- */
+footer {
+  margin-block: 4rem 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--fg-faint);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+footer a { color: var(--fg-faint) }
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  .kpi-value { font-size: 1.5rem }
+  h1 { font-size: 1.6rem }
+  .fail-name { min-width: 100px }
+}
+</style>
+
+<!-- HEADER -->
+<header>
+  <p class="eyebrow">TradeDoc-Bench · v0.1 · Public Benchmark</p>
+  <h1>How well does Gemini extract<br>Indian trade document data?</h1>
+  <p class="subtitle">An open benchmark of Gemini 3.5 Flash on 8 real Indian trade document types — commercial invoices, packing lists, airway bills, and certificates of origin.</p>
+  <div class="meta-row">
+    <span>📅 October 2026</span>
+    <span>🤖 Gemini 3.5 Flash · Temperature 0.0</span>
+    <span>📄 8 documents · 80 field extractions</span>
+    <span>🇮🇳 India HS/IEC context</span>
+  </div>
+</header>
+
+<!-- HEADLINE NUMBERS -->
+<div class="section">
+  <h2>Overall Results</h2>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <span class="kpi-label">Overall Accuracy</span>
+      <span class="kpi-value">77.5%</span>
+      <span class="kpi-sub">62 / 80 fields correct</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Wilson 95% CI</span>
+      <span class="kpi-value">±9%</span>
+      <span class="kpi-sub">[67.2% – 85.3%]</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Precision</span>
+      <span class="kpi-value">93.2%</span>
+      <span class="kpi-sub">Low hallucination rate</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Recall</span>
+      <span class="kpi-value">75.9%</span>
+      <span class="kpi-sub">Misses 1-in-4 present fields</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">F1 Score</span>
+      <span class="kpi-value">83.7%</span>
+      <span class="kpi-sub">Harmonic mean P/R</span>
+    </div>
+    <div class="kpi">
+      <span class="kpi-label">Median Latency</span>
+      <span class="kpi-value">16s</span>
+      <span class="kpi-sub">Range: 11s – 98s</span>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>Key finding:</strong> Gemini under-extracts rather than hallucinating — 72% of all failures are false negatives (missed fields), while only 17% are false positives (invented values). High precision makes it usable; low recall is the bottleneck to fix.
+  </div>
+
+  <p>All metrics computed with Wilson score 95% confidence intervals. Scores were determined against a ground truth frozen before any model runs, preventing anchoring bias.</p>
+</div>
+
+<!-- PER-DOC BREAKDOWN -->
+<div class="section">
+  <h2>Accuracy by Document</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Doc ID</th>
+          <th>Type</th>
+          <th>Correct / 10</th>
+          <th>Accuracy</th>
+          <th>95% CI</th>
+          <th>Notable failure</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>TD-01</code></td>
+          <td>Commercial Invoice</td>
+          <td>10 / 10</td>
+          <td><span class="pct pct-hi">100%</span></td>
+          <td class="ci">[69.2% – 100%]</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td><code>TD-02</code></td>
+          <td>Commercial Invoice</td>
+          <td>9 / 10</td>
+          <td><span class="pct pct-hi">90%</span></td>
+          <td class="ci">[55.5% – 99.7%]</td>
+          <td>Port routing text confused discharge port</td>
+        </tr>
+        <tr>
+          <td><code>TD-03</code></td>
+          <td>Packing List</td>
+          <td>8 / 10</td>
+          <td><span class="pct pct-hi">80%</span></td>
+          <td class="ci">[44.4% – 97.5%]</td>
+          <td>HS code truncated (6-digit vs 8-digit)</td>
+        </tr>
+        <tr>
+          <td><code>TD-04</code></td>
+          <td>Packing List</td>
+          <td>7 / 10</td>
+          <td><span class="pct pct-mid">70%</span></td>
+          <td class="ci">[34.8% – 93.3%]</td>
+          <td>Missed letterhead shipper name extraction</td>
+        </tr>
+        <tr>
+          <td><code>TD-05</code></td>
+          <td>Airway Bill (AWB)</td>
+          <td>8 / 10</td>
+          <td><span class="pct pct-hi">80%</span></td>
+          <td class="ci">[44.4% – 97.5%]</td>
+          <td>AWB execution date returned as invoice_date (FP)</td>
+        </tr>
+        <tr>
+          <td><code>TD-06</code></td>
+          <td>Packing List</td>
+          <td>7 / 10</td>
+          <td><span class="pct pct-mid">70%</span></td>
+          <td class="ci">[34.8% – 93.3%]</td>
+          <td>VTSZ/SZJ HS label not recognised</td>
+        </tr>
+        <tr>
+          <td><code>TD-07</code></td>
+          <td>Certificate of Origin</td>
+          <td>7 / 10</td>
+          <td><span class="pct pct-mid">70%</span></td>
+          <td class="ci">[34.8% – 93.3%]</td>
+          <td>COO field-10 invoice reference missed</td>
+        </tr>
+        <tr>
+          <td><code>TD-08</code></td>
+          <td>Packing List (multi-invoice)</td>
+          <td>6 / 10</td>
+          <td><span class="pct pct-lo">60%</span></td>
+          <td class="ci">[26.2% – 87.8%]</td>
+          <td>98s latency; shipper/consignee not parsed from letterhead</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PER-FIELD BREAKDOWN -->
+<div class="section">
+  <h2>Accuracy by Field</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Correct</th>
+          <th>Trials</th>
+          <th>Accuracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>shipper_name</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
+        <tr><td>consignee_name</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
+        <tr><td>invoice_number</td><td>6</td><td>6</td><td><span class="pct pct-hi">100%</span></td></tr>
+        <tr><td>invoice_date</td><td>5</td><td>6</td><td><span class="pct pct-hi">83.3%</span></td></tr>
+        <tr><td>hs_code</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
+        <tr><td>port_of_loading</td><td>7</td><td>8</td><td><span class="pct pct-hi">87.5%</span></td></tr>
+        <tr><td>port_of_discharge</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
+        <tr><td>total_invoice_value</td><td>6</td><td>6</td><td><span class="pct pct-hi">100%</span></td></tr>
+        <tr><td>currency</td><td>7</td><td>7</td><td><span class="pct pct-hi">100%</span></td></tr>
+        <tr><td>country_of_origin</td><td>7</td><td>8</td><td><span class="pct pct-hi">87.5%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:0.85rem; color:var(--fg-muted)">Trials vary per field because certain fields are genuinely absent on some document types (e.g., <code>total_invoice_value</code> is absent on packing lists and COOs). A model correctly returning null for an absent field counts as a true negative, not a miss.</p>
+</div>
+
+<!-- BY DOC TYPE -->
+<div class="section">
+  <h2>Accuracy by Document Type</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Document Type</th>
+          <th>Docs</th>
+          <th>Fields</th>
+          <th>Accuracy</th>
+          <th>Pattern</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Commercial Invoice</td>
+          <td>2</td>
+          <td>20</td>
+          <td><span class="pct pct-hi">93.3%</span></td>
+          <td>Structured layout; Gemini strongest here</td>
+        </tr>
+        <tr>
+          <td>Airway Bill (AWB)</td>
+          <td>1</td>
+          <td>10</td>
+          <td><span class="pct pct-hi">80.0%</span></td>
+          <td>Good overall; date ambiguity between AWB date and invoice date</td>
+        </tr>
+        <tr>
+          <td>Packing List</td>
+          <td>4</td>
+          <td>40</td>
+          <td><span class="pct pct-mid">70.0%</span></td>
+          <td>Letterhead parsing weak; HS label variants (VTSZ) missed</td>
+        </tr>
+        <tr>
+          <td>Certificate of Origin (COO)</td>
+          <td>1</td>
+          <td>10</td>
+          <td><span class="pct pct-lo">50.0%</span></td>
+          <td>Multi-column box layout; field-10 invoice reference not extracted</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FAILURE BREAKDOWN -->
+<div class="section">
+  <h2>Failure Analysis</h2>
+  <p>18 total failures across 80 field extractions.</p>
+
+  <div style="margin-block: 1.25rem">
+    <div class="fail-row">
+      <span class="fail-name">False Negative (FN)</span>
+      <div class="fail-bar-wrap"><div class="fail-bar" style="width:72.2%"></div></div>
+      <span class="fail-pct">72.2%</span>
+    </div>
+    <div class="fail-row">
+      <span class="fail-name">False Positive (FP)</span>
+      <div class="fail-bar-wrap"><div class="fail-bar" style="width:16.7%"></div></div>
+      <span class="fail-pct">16.7%</span>
+    </div>
+    <div class="fail-row">
+      <span class="fail-name">Wrong Value</span>
+      <div class="fail-bar-wrap"><div class="fail-bar" style="width:11.1%"></div></div>
+      <span class="fail-pct">11.1%</span>
+    </div>
+  </div>
+
+  <h3>Root cause patterns</h3>
+  <div class="stack">
+    <div class="insight" style="border-color: var(--bad); background: var(--bad-lt)">
+      <strong style="color:var(--bad)">Port routing text:</strong> "Freight collect at destination port" caused Gemini to pick up the wrong port for <code>port_of_discharge</code> on TD-02.
+    </div>
+    <div class="insight" style="border-color: var(--bad); background: var(--bad-lt)">
+      <strong style="color:var(--bad)">HS label variants:</strong> Hungarian customs labels VTSZ and SZJ on TD-06 not mapped to standard HS field — 6-digit "290722" returned instead of 8-digit "29072200".
+    </div>
+    <div class="insight" style="border-color: var(--bad); background: var(--bad-lt)">
+      <strong style="color:var(--bad)">Letterhead extraction:</strong> Multi-invoice packing lists (TD-04, TD-08) with shipper/consignee printed in header banners — not in labeled boxes — missed consistently.
+    </div>
+    <div class="insight" style="border-color: var(--bad); background: var(--bad-lt)">
+      <strong style="color:var(--bad)">COO multi-column layout:</strong> Field-10 of a Certificate of Origin references the underlying invoice number — Gemini did not infer this cross-reference.
+    </div>
+    <div class="insight" style="border-color: var(--bad); background: var(--bad-lt)">
+      <strong style="color:var(--bad)">Document type confusion:</strong> TD-05 AWB execution date returned as <code>invoice_date</code> — prompt did not explicitly prohibit non-invoice dates for AWBs.
+    </div>
+  </div>
+</div>
+
+<!-- BENCHMARK DESIGN -->
+<div class="section">
+  <h2>Benchmark Design</h2>
+
+  <h3>Why this benchmark exists</h3>
+  <p>Indian trade document extraction is a real production problem for Customs House Agents (CHAs) filing Bills of Entry and Shipping Bills. Documents arrive as scanned PDFs — often multilingual, with non-standard layouts — and even minor field extraction errors cause customs delays. No public benchmark tests LLM extraction on this specific document corpus.</p>
+
+  <h3>Controls used</h3>
+  <div class="stack" style="margin-block: 0.75rem">
+    <div><strong>Ground truth frozen before model runs</strong> — all 80 expected values were locked before any Gemini query. This prevents anchoring bias (the evaluator seeing model output before deciding what's "correct").</div>
+    <div><strong>Temperature = 0.0</strong> — fully deterministic. Every run produces the same output for the same document, making the benchmark reproducible.</div>
+    <div><strong>Single frozen prompt</strong> — the exact same prompt was used for all 8 documents. Changing prompts mid-run would make results incomparable across documents.</div>
+    <div><strong>Safe-abstention scoring</strong> — fields genuinely absent from a document type (e.g., <code>total_invoice_value</code> on a packing list) are scored as True Negative when the model correctly returns null. A model that hallucinates values for absent fields is penalized as False Positive.</div>
+    <div><strong>Wilson 95% CI</strong> — reported alongside point estimates throughout, because n=8 documents is a small sample and point estimates alone are misleading.</div>
+  </div>
+
+  <h3>Security note</h3>
+  <p>All documents used in this benchmark are synthetic or fully redacted samples. No real client, customer, or supplier data was uploaded to any AI service. All proper nouns, addresses, invoice numbers, and bank details were replaced with invented placeholders of the same format before use.</p>
+
+  <h3>The frozen prompt</h3>
+  <p>Every extraction used this exact prompt at Temperature 0.0:</p>
+  <span class="prompt-label">Frozen extraction prompt (verbatim)</span>
+  <div class="prompt-box">Extract the following 10 fields from this Indian trade document. Return ONLY valid JSON with exactly these keys. If a field is not present in the document, return null for that key.
+
+{
+  "shipper_name": "Full legal name of the shipper/exporter as printed",
+  "consignee_name": "Full legal name of the consignee/importer as printed",
+  "invoice_number": "Invoice reference number — only from an invoice, not an AWB or other doc",
+  "invoice_date": "Date on the invoice in YYYY-MM-DD format — only from an invoice",
+  "hs_code": "Harmonized System code (6–8 digits) — use the most specific one found",
+  "port_of_loading": "Port where goods were loaded — use the explicit port label only",
+  "port_of_discharge": "Port where goods will be discharged — use the explicit port label only",
+  "total_invoice_value": "Total invoice amount as a number — null if document is not an invoice",
+  "currency": "3-letter ISO currency code (e.g. USD, INR, EUR)",
+  "country_of_origin": "Country where goods were manufactured or produced"
+}
+
+Rules:
+1. Return ONLY the JSON object. No explanations, no markdown.
+2. Use null (not "", not "N/A") for missing fields.
+3. For port fields: extract only from explicit port labels. Do not infer ports from routing instructions or freight terms.
+4. For hs_code: if multiple HS codes appear, return the most specific (longest) one.
+5. For invoice_number and invoice_date: these fields are specific to commercial invoices. Return null for AWBs, packing lists, COOs, and other non-invoice documents.
+6. For total_invoice_value: return null for packing lists, COOs, and AWBs.
+7. If a field label uses a non-English equivalent (e.g., VTSZ, SZJ for HS code in Hungarian docs), still extract the value.</div>
+</div>
+
+<!-- LATENCY -->
+<div class="section">
+  <h2>Latency</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Doc ID</th>
+          <th>Type</th>
+          <th>Latency</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>TD-01</code></td><td>Commercial Invoice</td><td><span class="pct pct-hi">11s</span></td><td>Fastest run</td></tr>
+        <tr><td><code>TD-02</code></td><td>Commercial Invoice</td><td><span class="pct pct-hi">24s</span></td><td>—</td></tr>
+        <tr><td><code>TD-03</code></td><td>Packing List</td><td><span class="pct pct-hi">15s</span></td><td>—</td></tr>
+        <tr><td><code>TD-04</code></td><td>Packing List</td><td><span class="pct pct-hi">14s</span></td><td>—</td></tr>
+        <tr><td><code>TD-05</code></td><td>AWB</td><td><span class="pct pct-hi">17s</span></td><td>—</td></tr>
+        <tr><td><code>TD-06</code></td><td>Packing List</td><td><span class="pct pct-hi">16s</span></td><td>—</td></tr>
+        <tr><td><code>TD-07</code></td><td>COO</td><td><span class="pct pct-hi">16s</span></td><td>—</td></tr>
+        <tr><td><code>TD-08</code></td><td>Packing List (multi-invoice)</td><td><span class="pct pct-lo">98s</span></td><td>69-line doc; 6× median — scalability concern</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Median latency: 16s. TD-08's 98s response on a 69-line multi-invoice packing list is a production concern — processing a batch of 20 such documents would take ~33 minutes at this rate.</p>
+</div>
+
+<!-- WHAT'S NEXT -->
+<div class="section">
+  <h2>What's Next</h2>
+  <div class="row">
+    <div>
+      <h3>Expand the corpus</h3>
+      <p>v0.2 will add Bill of Lading, Shipping Bill (India-specific), and Letter of Credit documents — bringing the total to 15 document types and ~150 field extractions.</p>
+    </div>
+    <div>
+      <h3>Multi-model comparison</h3>
+      <p>Run the same frozen prompt and ground truth against GPT-4o, Claude 3.5 Sonnet, and Llama 3.1 70B to produce an apples-to-apples comparison table.</p>
+    </div>
+    <div>
+      <h3>Prompt engineering study</h3>
+      <p>Test whether adding document-type routing logic (detect doc type first, then apply type-specific extraction rules) closes the recall gap on packing lists and COOs.</p>
+    </div>
+  </div>
+</div>
+
+<!-- AUTHOR -->
+<div class="section">
+  <h2>About</h2>
+  <p>Built by <strong>Yuvarajan Duraisamy (Yuvi)</strong> — building Thavasi, an AI extraction layer for Indian Customs House Agents. This benchmark was designed to bring public, reproducible measurement to a gap in the existing LLM evaluation landscape.</p>
+  <p>Contact: <code>yuvarajanduraisamy@gmail.com</code> · GitHub: <a href="https://github.com/paperstreet47/tradedoc-bench" target="_blank">paperstreet47/tradedoc-bench</a></p>
+</div>
+
+<footer>
+  <span>TradeDoc-Bench v0.1 · October 2026</span>
+  <span>Gemini 3.5 Flash · 8 documents · 80 extractions · Wilson 95% CI throughout</span>
+  <span><a href="https://github.com/paperstreet47/tradedoc-bench" target="_blank">View on GitHub ↗</a></span>
+</footer>

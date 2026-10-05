@@ -1,0 +1,60 @@
+# TradeDoc-Bench v0.1
+
+## What this is
+
+A public benchmark evaluating Gemini 3.5 Flash on structured field extraction from Indian trade documents. Built by Yuvarajan Duraisamy (Yuvi) in October 2026.
+
+This is an exploratory baseline — 8 documents, 80 field extractions — not a definitive vendor ranking.
+
+## Who it is for
+
+- AI/ML researchers evaluating LLM document extraction
+- Builders of customs, logistics, and trade-finance automation tools
+- Benchmark designers looking at Indian document corpora
+- Anyone evaluating Gemini 3.5 Flash on structured extraction tasks
+
+## What was measured
+
+10 fields across 4 Indian trade document types:
+- Invoice: shipper_name, consignee_name, invoice_number, invoice_date, hs_code, port_of_loading, port_of_discharge, total_invoice_value, currency, country_of_origin
+- Packing list: same fields (several are structurally absent)
+- Air waybill (AWB): same fields (invoice fields correctly return null)
+- Certificate of Origin (COO): same fields
+
+## Key results (v0.1)
+
+- Overall field accuracy: 77.5% (62/80), Wilson 95% CI [67.2%, 85.3%]
+- Safe-abstention Precision: 93.2% — Gemini rarely hallucinates
+- Safe-abstention Recall: 75.9% — Gemini under-extracts (misses 1 in 4 present fields)
+- F1: 83.7%
+- JSON validity: 100% (8/8 outputs parseable)
+- Dominant failure mode: false negatives (under-extraction), not hallucination
+
+## Model tested
+
+Gemini 3.5 Flash, Temperature 0.0, zero-shot frozen prompt, single run per document.
+
+## Data
+
+- Machine-readable results: https://paperstreet47.github.io/tradedoc-bench/benchmark.json
+- Human-readable report: https://paperstreet47.github.io/tradedoc-bench/
+- Source code and ground truth: https://github.com/paperstreet47/tradedoc-bench
+
+## How to cite
+
+Duraisamy, Y. (2026). TradeDoc-Bench v0.1: Evaluating Gemini 3.5 Flash on Indian trade document extraction. https://paperstreet47.github.io/tradedoc-bench/
+
+## License
+
+Data: CC-BY-4.0. Code: MIT.
+
+## Known gaps (planned for v0.2)
+
+- Evidence-backed accuracy (verbatim quote citations) not measured
+- Single model — no cross-model comparison
+- 8 documents only — CI too wide for strong claims
+- No variance estimate (single run per doc)
+
+## Contact
+
+yuvarajanduraisamy@gmail.com
