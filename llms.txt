@@ -16,10 +16,11 @@ This is an exploratory baseline — 8 documents, 80 field extractions — not a 
 ## What was measured
 
 10 fields across 4 Indian trade document types:
-- Invoice: shipper_name, consignee_name, invoice_number, invoice_date, hs_code, port_of_loading, port_of_discharge, total_invoice_value, currency, country_of_origin
-- Packing list: same fields (several are structurally absent)
-- Air waybill (AWB): same fields (invoice fields correctly return null)
-- Certificate of Origin (COO): same fields
+- seller_name, buyer_name, document_number, document_date, total_invoice_value, currency, hs_code, country_of_origin, port_of_loading, port_of_discharge
+- Each field returned by the model as {value, evidence, page} — only value was scored in v0.1
+- Packing list: several fields structurally absent (model expected to return null)
+- Air waybill (AWB): document_number is AWB/B/L number; document_date and total_invoice_value correctly null
+- Certificate of Origin (COO): references underlying invoice in field 10
 
 ## Key results (v0.1)
 
@@ -50,7 +51,7 @@ Data: CC-BY-4.0. Code: MIT.
 
 ## Known gaps (planned for v0.2)
 
-- Evidence-backed accuracy (verbatim quote citations) not measured
+- Evidence quality not scored — prompt requested verbatim citations per field but only value fields were evaluated against ground truth
 - Single model — no cross-model comparison
 - 8 documents only — CI too wide for strong claims
 - No variance estimate (single run per doc)

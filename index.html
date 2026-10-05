@@ -57,7 +57,8 @@
       "unitText": "proportion"
     }
   ],
-  "keywords": ["LLM benchmark", "document extraction", "trade documents", "Indian customs", "Gemini", "structured extraction", "invoice parsing", "NLP evaluation"]
+  "keywords": ["LLM benchmark", "document extraction", "trade documents", "Indian customs", "Gemini", "structured extraction", "invoice parsing", "NLP evaluation"],
+  "variableMeasured_fields": ["seller_name", "buyer_name", "document_number", "document_date", "total_invoice_value", "currency", "hs_code", "country_of_origin", "port_of_loading", "port_of_discharge"]
 }
 </script>
 
@@ -356,6 +357,46 @@ footer a { color: var(--fg-faint) }
     <strong>Key finding:</strong> Gemini under-extracts rather than hallucinating — 72% of all failures are false negatives (missed fields), while only 17% are false positives (invented values). High precision makes it usable; low recall is the bottleneck to fix.
   </div>
 
+  <!-- CHART 2: Precision / Recall / F1 — grouped bar -->
+  <svg role="img" aria-labelledby="chart2-title chart2-desc"
+       viewBox="0 0 520 220" width="100%" style="max-width:520px; display:block; margin-block:1.5rem; overflow:visible">
+    <title id="chart2-title">Precision, Recall, and F1 Score</title>
+    <desc id="chart2-desc">Bar chart comparing three metrics. Precision: 93.2%. Recall: 75.9%. F1: 83.7%.</desc>
+    <!-- Y axis -->
+    <line x1="60" y1="10" x2="60" y2="160" stroke="#E2DDD8" stroke-width="1"/>
+    <!-- Y grid lines + labels: 0%, 25%, 50%, 75%, 100% -->
+    <line x1="60" y1="160" x2="460" y2="160" stroke="#E2DDD8" stroke-width="1"/>
+    <line x1="60" y1="122.5" x2="460" y2="122.5" stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="60" y1="85"   x2="460" y2="85"   stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="60" y1="47.5" x2="460" y2="47.5" stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="60" y1="10"   x2="460" y2="10"   stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="52" y="163" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">0%</text>
+    <text x="52" y="126" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">25%</text>
+    <text x="52" y="88"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">50%</text>
+    <text x="52" y="50"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">75%</text>
+    <text x="52" y="13"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">100%</text>
+    <!-- Bars: height = pct/100 * 150; y = 160 - height -->
+    <!-- Precision 93.2%: height=139.8, y=20.2 -->
+    <rect x="100" y="21" width="80" height="139" rx="3" fill="#1A7A3C"/>
+    <!-- Recall 75.9%: height=113.9, y=46.1 -->
+    <rect x="220" y="46" width="80" height="114" rx="3" fill="#B35E00"/>
+    <!-- F1 83.7%: height=125.6, y=34.4 -->
+    <rect x="340" y="34" width="80" height="126" rx="3" fill="#2563A8"/>
+    <!-- Value labels above bars -->
+    <text x="140" y="16" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">93.2%</text>
+    <text x="260" y="41" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">75.9%</text>
+    <text x="380" y="29" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">83.7%</text>
+    <!-- X axis labels -->
+    <text x="140" y="178" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Precision</text>
+    <text x="260" y="178" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Recall</text>
+    <text x="380" y="178" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">F1 Score</text>
+    <!-- Sub-labels -->
+    <text x="140" y="194" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">low hallucination</text>
+    <text x="260" y="194" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">misses 1-in-4</text>
+    <text x="380" y="194" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">harmonic mean</text>
+  </svg>
+  <p style="font-size:0.8rem;color:var(--fg-faint);margin-top:-0.5rem">Safe-abstention metrics. Precision = TP / (TP+FP). Recall = TP / (TP+FN). F1 = harmonic mean.</p>
+
   <p>All metrics computed with Wilson score 95% confidence intervals. Scores were determined against a ground truth frozen before any model runs, preventing anchoring bias.</p>
 </div>
 
@@ -413,7 +454,7 @@ footer a { color: var(--fg-faint) }
           <td>8 / 10</td>
           <td><span class="pct pct-hi">80%</span></td>
           <td class="ci">[44.4% – 97.5%]</td>
-          <td>AWB execution date returned as invoice_date (FP)</td>
+          <td>AWB execution date returned as document_date — prompt instructs null for non-invoice docs</td>
         </tr>
         <tr>
           <td><code>TD-06</code></td>
@@ -458,10 +499,10 @@ footer a { color: var(--fg-faint) }
         </tr>
       </thead>
       <tbody>
-        <tr><td>shipper_name</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
-        <tr><td>consignee_name</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
-        <tr><td>invoice_number</td><td>6</td><td>6</td><td><span class="pct pct-hi">100%</span></td></tr>
-        <tr><td>invoice_date</td><td>5</td><td>6</td><td><span class="pct pct-hi">83.3%</span></td></tr>
+        <tr><td>seller_name</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
+        <tr><td>buyer_name</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
+        <tr><td>document_number</td><td>6</td><td>6</td><td><span class="pct pct-hi">100%</span></td></tr>
+        <tr><td>document_date</td><td>5</td><td>6</td><td><span class="pct pct-hi">83.3%</span></td></tr>
         <tr><td>hs_code</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
         <tr><td>port_of_loading</td><td>7</td><td>8</td><td><span class="pct pct-hi">87.5%</span></td></tr>
         <tr><td>port_of_discharge</td><td>6</td><td>8</td><td><span class="pct pct-mid">75.0%</span></td></tr>
@@ -477,6 +518,35 @@ footer a { color: var(--fg-faint) }
 <!-- BY DOC TYPE -->
 <div class="section">
   <h2>Accuracy by Document Type</h2>
+
+  <!-- CHART 1: Accuracy by doc type — horizontal bars -->
+  <svg role="img" aria-labelledby="chart1-title chart1-desc"
+       viewBox="0 0 680 200" width="100%" style="max-width:680px; display:block; margin-block:1.5rem; overflow:visible">
+    <title id="chart1-title">Accuracy by document type</title>
+    <desc id="chart1-desc">Horizontal bar chart. Commercial Invoice 93.3%, Airway Bill 80%, Packing List 70%, Certificate of Origin 50%.</desc>
+    <!-- Y axis labels -->
+    <text x="168" y="38"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Commercial Invoice</text>
+    <text x="168" y="88"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Airway Bill (AWB)</text>
+    <text x="168" y="138" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Packing List</text>
+    <text x="168" y="188" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Cert. of Origin</text>
+    <!-- track -->
+    <rect x="178" y="22" width="420" height="24" rx="3" fill="#E2DDD8"/>
+    <rect x="178" y="72" width="420" height="24" rx="3" fill="#E2DDD8"/>
+    <rect x="178" y="122" width="420" height="24" rx="3" fill="#E2DDD8"/>
+    <rect x="178" y="172" width="420" height="24" rx="3" fill="#E2DDD8"/>
+    <!-- filled bars: width = pct * 420 -->
+    <rect x="178" y="22" width="391" height="24" rx="3" fill="#1A7A3C"/><!-- 93.3% -->
+    <rect x="178" y="72" width="336" height="24" rx="3" fill="#1A7A3C"/><!-- 80% -->
+    <rect x="178" y="122" width="294" height="24" rx="3" fill="#B35E00"/><!-- 70% -->
+    <rect x="178" y="172" width="210" height="24" rx="3" fill="#C0392B"/><!-- 50% -->
+    <!-- value labels -->
+    <text x="575" y="38"  font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">93.3%</text>
+    <text x="575" y="88"  font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">80.0%</text>
+    <text x="575" y="138" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">70.0%</text>
+    <text x="575" y="188" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">50.0%</text>
+  </svg>
+  <p style="font-size:0.8rem;color:var(--fg-faint);margin-top:-0.5rem">n = fields scored per type. Green ≥ 80%, amber 65–79%, red &lt; 65%.</p>
+
   <div class="tbl-wrap">
     <table>
       <thead>
@@ -527,23 +597,33 @@ footer a { color: var(--fg-faint) }
   <h2>Failure Analysis</h2>
   <p>18 total failures across 80 field extractions.</p>
 
-  <div style="margin-block: 1.25rem">
-    <div class="fail-row">
-      <span class="fail-name">False Negative (FN)</span>
-      <div class="fail-bar-wrap"><div class="fail-bar" style="width:72.2%"></div></div>
-      <span class="fail-pct">72.2%</span>
-    </div>
-    <div class="fail-row">
-      <span class="fail-name">False Positive (FP)</span>
-      <div class="fail-bar-wrap"><div class="fail-bar" style="width:16.7%"></div></div>
-      <span class="fail-pct">16.7%</span>
-    </div>
-    <div class="fail-row">
-      <span class="fail-name">Wrong Value</span>
-      <div class="fail-bar-wrap"><div class="fail-bar" style="width:11.1%"></div></div>
-      <span class="fail-pct">11.1%</span>
-    </div>
-  </div>
+  <!-- CHART 3: Failure breakdown — horizontal bars, share of 18 total failures -->
+  <svg role="img" aria-labelledby="chart3-title chart3-desc"
+       viewBox="0 0 620 170" width="100%" style="max-width:620px; display:block; margin-block:1.25rem; overflow:visible">
+    <title id="chart3-title">Failure breakdown by type</title>
+    <desc id="chart3-desc">Horizontal bar chart of 18 failures. False Negative 72.2% (13 of 18). False Positive 16.7% (3 of 18). Wrong Value 11.1% (2 of 18).</desc>
+    <!-- Labels -->
+    <text x="175" y="38"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">False Negative (FN)</text>
+    <text x="175" y="93"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">False Positive (FP)</text>
+    <text x="175" y="148" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="12" fill="#5C544E">Wrong Value</text>
+    <!-- Sub-labels -->
+    <text x="175" y="52"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#9B9089">missed 13 present fields</text>
+    <text x="175" y="107" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#9B9089">hallucinated 1 absent field</text>
+    <text x="175" y="162" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#9B9089">value present but wrong</text>
+    <!-- Tracks (full width = 390px) -->
+    <rect x="185" y="22" width="390" height="24" rx="3" fill="#E2DDD8"/>
+    <rect x="185" y="77" width="390" height="24" rx="3" fill="#E2DDD8"/>
+    <rect x="185" y="132" width="390" height="24" rx="3" fill="#E2DDD8"/>
+    <!-- Filled bars: width = pct * 390 -->
+    <rect x="185" y="22" width="282" height="24" rx="3" fill="#C0392B"/><!-- 72.2% -->
+    <rect x="185" y="77" width="65"  height="24" rx="3" fill="#E67E22"/><!-- 16.7% -->
+    <rect x="185" y="132" width="43" height="24" rx="3" fill="#B35E00"/><!-- 11.1% -->
+    <!-- Value labels -->
+    <text x="474" y="38"  font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">72.2% (13)</text>
+    <text x="474" y="93"  font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">16.7% (3)</text>
+    <text x="474" y="148" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="600" fill="#1A1714">11.1% (2)</text>
+  </svg>
+  <p style="font-size:0.8rem;color:var(--fg-faint);margin-top:-0.5rem">Share of 18 total failures. Dominant mode: under-extraction (FN), not hallucination (FP).</p>
 
   <h3>Root cause patterns</h3>
   <div class="stack">
@@ -585,36 +665,118 @@ footer a { color: var(--fg-faint) }
   <p>All documents used in this benchmark are synthetic or fully redacted samples. No real client, customer, or supplier data was uploaded to any AI service. All proper nouns, addresses, invoice numbers, and bank details were replaced with invented placeholders of the same format before use.</p>
 
   <h3>The frozen prompt</h3>
-  <p>Every extraction used this exact prompt at Temperature 0.0:</p>
+  <p>Every extraction used this exact prompt at Temperature 0.0. Note the schema requests <code>evidence</code> (verbatim quote) and <code>page</code> (1-indexed page number) alongside each <code>value</code> — evidence quality was not separately scored in v0.1, only <code>value</code> fields were evaluated against ground truth. Evidence scoring is planned for v0.2.</p>
   <span class="prompt-label">Frozen extraction prompt (verbatim)</span>
-  <div class="prompt-box">Extract the following 10 fields from this Indian trade document. Return ONLY valid JSON with exactly these keys. If a field is not present in the document, return null for that key.
-
+  <div class="prompt-box">You are extracting structured information from a trade document for an operational review workflow.
+Return only valid JSON. Do not include Markdown, explanations, or any text before or after the JSON.
+Use this schema exactly. Every field must appear.
 {
-  "shipper_name": "Full legal name of the shipper/exporter as printed",
-  "consignee_name": "Full legal name of the consignee/importer as printed",
-  "invoice_number": "Invoice reference number — only from an invoice, not an AWB or other doc",
-  "invoice_date": "Date on the invoice in YYYY-MM-DD format — only from an invoice",
-  "hs_code": "Harmonized System code (6–8 digits) — use the most specific one found",
-  "port_of_loading": "Port where goods were loaded — use the explicit port label only",
-  "port_of_discharge": "Port where goods will be discharged — use the explicit port label only",
-  "total_invoice_value": "Total invoice amount as a number — null if document is not an invoice",
-  "currency": "3-letter ISO currency code (e.g. USD, INR, EUR)",
-  "country_of_origin": "Country where goods were manufactured or produced"
+  "document_number": { "value": null, "evidence": null, "page": null },
+  "document_date":   { "value": null, "evidence": null, "page": null },
+  "seller_name":     { "value": null, "evidence": null, "page": null },
+  "buyer_name":      { "value": null, "evidence": null, "page": null },
+  "total_invoice_value": { "value": null, "evidence": null, "page": null },
+  "currency":        { "value": null, "evidence": null, "page": null },
+  "hs_code":         { "value": null, "evidence": null, "page": null },
+  "country_of_origin": { "value": null, "evidence": null, "page": null },
+  "port_of_loading": { "value": null, "evidence": null, "page": null },
+  "port_of_discharge": { "value": null, "evidence": null, "page": null }
 }
-
+Definitions:
+document_number: the primary identifier of this document. For an invoice, extract the invoice number. For a bill of lading or airway bill, extract the B/L or AWB number.
+document_date: the primary issue or document date. For an invoice, extract the invoice date.
+seller_name: an entity explicitly labelled seller, exporter, shipper, consignor, or equivalent.
+buyer_name: an entity explicitly labelled buyer, consignee, importer, or equivalent.
+total_invoice_value: a value explicitly labelled invoice total, grand total, final amount, declared value, or total. Do not calculate totals and do not return line-item values or subtotals.
+currency: the currency explicitly associated with the total invoice value.
+hs_code: an HS, HSN, tariff, or commodity code only when explicitly printed in the document.
+country_of_origin: a country only when explicitly labelled as country of origin, origin, or equivalent.
+port_of_loading: a port only when explicitly labelled port of loading, POL, place of receipt, or equivalent.
+port_of_discharge: a port only when explicitly labelled port of discharge, POD, destination port, place of delivery, or equivalent.
 Rules:
-1. Return ONLY the JSON object. No explanations, no markdown.
-2. Use null (not "", not "N/A") for missing fields.
-3. For port fields: extract only from explicit port labels. Do not infer ports from routing instructions or freight terms.
-4. For hs_code: if multiple HS codes appear, return the most specific (longest) one.
-5. For invoice_number and invoice_date: these fields are specific to commercial invoices. Return null for AWBs, packing lists, COOs, and other non-invoice documents.
-6. For total_invoice_value: return null for packing lists, COOs, and AWBs.
-7. If a field label uses a non-English equivalent (e.g., VTSZ, SZJ for HS code in Hungarian docs), still extract the value.</div>
+Extract only information explicitly supported by the document. Do not infer, calculate, normalize, or invent any value.
+If a field is not explicitly stated, set value, evidence, and page to null.
+Evidence must be a short verbatim quote from the document that directly supports the returned value.
+page must be the 1-indexed page number containing the evidence.
+Preserve spelling, units, currency symbols, and numeric formatting as they appear in the document.
+If multiple values could appear to be totals, return only the one explicitly labelled as invoice total, grand total, final amount, declared value, or total.
+If a field is ambiguous, return null rather than choosing one candidate.</div>
 </div>
 
 <!-- LATENCY -->
 <div class="section">
   <h2>Latency</h2>
+
+  <!-- CHART 4: Latency per document — vertical bars, TD-08 spike highlighted -->
+  <svg role="img" aria-labelledby="chart4-title chart4-desc"
+       viewBox="0 0 620 240" width="100%" style="max-width:620px; display:block; margin-block:1.5rem; overflow:visible">
+    <title id="chart4-title">Latency per document (seconds)</title>
+    <desc id="chart4-desc">Bar chart. TD-01: 11s, TD-02: 24s, TD-03: 15s, TD-04: 14s, TD-05: 17s, TD-06: 16s, TD-07: 16s, TD-08: 98s (outlier, 6× median).</desc>
+    <!-- Y axis -->
+    <line x1="48" y1="10" x2="48" y2="170" stroke="#E2DDD8" stroke-width="1"/>
+    <!-- Y grid lines at 0, 25, 50, 75, 100s. Scale: 170px = 100s, so 1s = 1.7px -->
+    <line x1="48" y1="170" x2="590" y2="170" stroke="#E2DDD8" stroke-width="1"/>
+    <line x1="48" y1="127.5" x2="590" y2="127.5" stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="48" y1="85"   x2="590" y2="85"   stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="48" y1="42.5" x2="590" y2="42.5" stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="48" y1="10"   x2="590" y2="10"   stroke="#E2DDD8" stroke-width="1" stroke-dasharray="3,3"/>
+    <!-- Y labels -->
+    <text x="42" y="173" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">0s</text>
+    <text x="42" y="131" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">25s</text>
+    <text x="42" y="88"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">50s</text>
+    <text x="42" y="46"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">75s</text>
+    <text x="42" y="13"  text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="#9B9089">100s</text>
+    <!-- Bars: x positions spaced 68px apart, bar width=44, 1s=1.7px -->
+    <!-- TD-01: 11s → height=18.7 → y=151.3 -->
+    <rect x="60"  y="151" width="44" height="19" rx="3" fill="#1A7A3C"/>
+    <!-- TD-02: 24s → height=40.8 → y=129.2 -->
+    <rect x="128" y="129" width="44" height="41" rx="3" fill="#1A7A3C"/>
+    <!-- TD-03: 15s → height=25.5 → y=144.5 -->
+    <rect x="196" y="145" width="44" height="25" rx="3" fill="#1A7A3C"/>
+    <!-- TD-04: 14s → height=23.8 → y=146.2 -->
+    <rect x="264" y="146" width="44" height="24" rx="3" fill="#1A7A3C"/>
+    <!-- TD-05: 17s → height=28.9 → y=141.1 -->
+    <rect x="332" y="141" width="44" height="29" rx="3" fill="#1A7A3C"/>
+    <!-- TD-06: 16s → height=27.2 → y=142.8 -->
+    <rect x="400" y="143" width="44" height="27" rx="3" fill="#1A7A3C"/>
+    <!-- TD-07: 16s → height=27.2 → y=142.8 -->
+    <rect x="468" y="143" width="44" height="27" rx="3" fill="#1A7A3C"/>
+    <!-- TD-08: 98s → height=166.6 → y=3.4 — OUTLIER highlighted red -->
+    <rect x="536" y="4"   width="44" height="166" rx="3" fill="#C0392B"/>
+    <!-- Median line: 16s → y = 170 - (16*1.7) = 142.8 -->
+    <line x1="48" y1="143" x2="590" y2="143" stroke="#B35E00" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <text x="592" y="146" font-family="IBM Plex Mono,monospace" font-size="9" fill="#B35E00">median 16s</text>
+    <!-- Value labels above bars -->
+    <text x="82"  y="146" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">11s</text>
+    <text x="150" y="124" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">24s</text>
+    <text x="218" y="140" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">15s</text>
+    <text x="286" y="141" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">14s</text>
+    <text x="354" y="136" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">17s</text>
+    <text x="422" y="138" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">16s</text>
+    <text x="490" y="138" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#1A1714">16s</text>
+    <text x="558" y="0"   text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" font-weight="600" fill="#C0392B">98s ⚠</text>
+    <!-- X axis labels -->
+    <text x="82"  y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-01</text>
+    <text x="150" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-02</text>
+    <text x="218" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-03</text>
+    <text x="286" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-04</text>
+    <text x="354" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-05</text>
+    <text x="422" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-06</text>
+    <text x="490" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#5C544E">TD-07</text>
+    <text x="558" y="188" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="#C0392B">TD-08</text>
+    <!-- X sub-labels (doc type) -->
+    <text x="82"  y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">Invoice</text>
+    <text x="150" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">Invoice</text>
+    <text x="218" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">Pack List</text>
+    <text x="286" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">Pack List</text>
+    <text x="354" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">AWB</text>
+    <text x="422" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">Pack List</text>
+    <text x="490" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">COO</text>
+    <text x="558" y="200" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#9B9089">Pack List</text>
+    <text x="558" y="210" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="#C0392B">(multi-inv.)</text>
+  </svg>
+  <p style="font-size:0.8rem;color:var(--fg-faint);margin-top:-0.5rem">Dashed amber line = median 16s. TD-08 (69-line multi-invoice packing list) is 6× the median — a production scalability signal.</p>
+
   <div class="tbl-wrap">
     <table>
       <thead>

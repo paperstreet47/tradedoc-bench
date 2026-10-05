@@ -26,17 +26,18 @@
     "document_origins": "synthetic and redacted samples — no real client data"
   },
   "fields_evaluated": [
-    "shipper_name",
-    "consignee_name",
-    "invoice_number",
-    "invoice_date",
-    "hs_code",
-    "port_of_loading",
-    "port_of_discharge",
+    "seller_name",
+    "buyer_name",
+    "document_number",
+    "document_date",
     "total_invoice_value",
     "currency",
-    "country_of_origin"
+    "hs_code",
+    "country_of_origin",
+    "port_of_loading",
+    "port_of_discharge"
   ],
+  "prompt_schema_note": "Each field was returned by the model as {value, evidence, page}. Evidence is a verbatim quote from the document; page is the 1-indexed page number. Only the value field was scored against ground truth in v0.1. Evidence quality scoring is planned for v0.2.",
   "metrics": {
     "field_accuracy": {
       "value": 0.775,
@@ -63,7 +64,7 @@
     },
     "evidence_backed_accuracy": {
       "value": null,
-      "note": "Not measured in v0.1 — the prompt did not request evidence/page citations. Planned for v0.2."
+      "note": "Prompt requested evidence citations and page numbers per field. Evidence quality was not separately scored in v0.1 — only value fields were evaluated against ground truth. Planned for v0.2."
     }
   },
   "per_doc_type": {
@@ -73,19 +74,24 @@
       "notes": "Best performing doc type"
     },
     "packing_list": {
-      "doc_ids": ["TD-03", "TD-04"],
+      "doc_ids": ["TD-03", "TD-04", "TD-08"],
       "field_accuracy": 0.65,
-      "notes": "Struggles with letterhead ambiguity for shipper vs consignee"
+      "notes": "Struggles with letterhead ambiguity for seller vs buyer name"
     },
     "bl_awb": {
-      "doc_ids": ["TD-05", "TD-07"],
-      "field_accuracy": 0.70,
-      "notes": "TD-05 AWB: invoice_date and total_invoice_value correctly returned null"
+      "doc_ids": ["TD-05"],
+      "field_accuracy": 0.80,
+      "notes": "TD-05 AWB: document_date and total_invoice_value correctly returned null"
     },
     "cert_origin": {
-      "doc_ids": ["TD-06", "TD-08"],
+      "doc_ids": ["TD-06"],
       "field_accuracy": 0.75,
-      "notes": "TD-06: 6-digit HS code returned instead of 8-digit. TD-08: 98s latency outlier."
+      "notes": "TD-06: 6-digit HS code returned instead of 8-digit"
+    },
+    "commercial_invoice": {
+      "doc_ids": ["TD-07"],
+      "field_accuracy": 0.70,
+      "notes": "TD-07: VTSZ/SZJ HS label recognised; country_of_origin field blank in scan"
     }
   },
   "failure_analysis": {
@@ -115,11 +121,11 @@
     "TD-07": 16,
     "TD-08": 98,
     "median": 16,
-    "note": "TD-08 is a 2-page COO with complex table structure — likely a cold-start or complexity spike"
+    "note": "TD-08 is a 69-line multi-invoice packing list — 6x the median, a production scalability signal"
   },
   "known_limitations": [
     "8 documents is too small for statistical confidence — Wilson CI is wide: [67.2%, 85.3%]",
-    "Evidence-backed accuracy not measured (prompt did not request page citations)",
+    "Evidence quality not scored in v0.1 — prompt requested citations but only value fields were evaluated",
     "Single run per document — no variance estimate across runs",
     "All documents are synthetic or redacted — performance on real production documents may differ",
     "Single model tested — no cross-model comparison yet",
